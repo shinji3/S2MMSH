@@ -4,7 +4,7 @@ S2MMSH
 なんでも実況V　ストリーミング変換サーバ
 
 ##STORM (Stream to relayable MMSH)に変わる模様  
-※reliableではない可能性が高い 
+※reliableではない可能性が高い  
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/kikakubu-ksg/s2mmsh/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
@@ -26,7 +26,7 @@ S2MMSHの入力ストリームにtcp://IP:ポートを指定し、平均ビッ�
 コマンドをS2MMSHに直接貼り付ければFFMPEGランチャー起動する必要はないですぞ。  
 
 [入力にMMSソースを使う場合]  
-プロトコルはmmsh://に書き換える。 （http://とmms://は自動的に置き換えられる。）
+プロトコルはmmsh://に書き換える。 （http://とmms://は自動的に置き換えられる。）  
 
 [その他のソースを使う場合]  
 RTSP、RTMP等、ffmpegが対応しているプロトコルについては変換可能。youtubeとかニコ生とかはURLさえ分かればだいたい変換可能？  
