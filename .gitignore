@@ -28,3 +28,6 @@ obj/
 _ReSharper*/
 [Tt]est[Rr]esult*
 ipch/
+[Bb]in/
+[Dd]ebug*/
+[Rr]elease*/

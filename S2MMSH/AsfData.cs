@@ -35,6 +35,8 @@ namespace S2MMSH
 
     public sealed class AsfData
     {
+        public static int ASF_HEADER_BUFSIZE = 65535;
+
         private static AsfData m_Instance = new AsfData();
         public ASF_STATUS asf_status = ASF_STATUS.ASF_STATUS_NULL;
         public int asf_header_size = 0;

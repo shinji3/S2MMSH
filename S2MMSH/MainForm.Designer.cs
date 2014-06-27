@@ -86,8 +86,30 @@
             this.l_Auther = new System.Windows.Forms.Label();
             this.tbx_Title = new System.Windows.Forms.TextBox();
             this.l_Title = new System.Windows.Forms.Label();
+            this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.label19 = new System.Windows.Forms.Label();
+            this.textBox_push = new System.Windows.Forms.TextBox();
+            this.tabPage6 = new System.Windows.Forms.TabPage();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.label_version = new System.Windows.Forms.Label();
+            this.panel3 = new System.Windows.Forms.Panel();
+            this.radioButton_permanent_2 = new System.Windows.Forms.RadioButton();
+            this.label21 = new System.Windows.Forms.Label();
+            this.radioButton_permanent_1 = new System.Windows.Forms.RadioButton();
+            this.panel4 = new System.Windows.Forms.Panel();
+            this.radioButton_type_2 = new System.Windows.Forms.RadioButton();
+            this.label22 = new System.Windows.Forms.Label();
+            this.radioButton_type_1 = new System.Windows.Forms.RadioButton();
+            this.panel5 = new System.Windows.Forms.Panel();
+            this.radioButton1 = new System.Windows.Forms.RadioButton();
+            this.label23 = new System.Windows.Forms.Label();
+            this.radioButton2 = new System.Windows.Forms.RadioButton();
+            this.label24 = new System.Windows.Forms.Label();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.listView1 = new System.Windows.Forms.ListView();
+            this.button_list_add = new System.Windows.Forms.Button();
+            this.button_list_delete = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.groupBox_reencode.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -95,7 +117,12 @@
             this.tabPage2.SuspendLayout();
             this.panel2.SuspendLayout();
             this.tabPage4.SuspendLayout();
+            this.tabPage5.SuspendLayout();
+            this.tabPage6.SuspendLayout();
             this.tabPage3.SuspendLayout();
+            this.panel3.SuspendLayout();
+            this.panel4.SuspendLayout();
+            this.panel5.SuspendLayout();
             this.SuspendLayout();
             // 
             // button_exec
@@ -456,6 +483,8 @@
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage4);
+            this.tabControl1.Controls.Add(this.tabPage5);
+            this.tabControl1.Controls.Add(this.tabPage6);
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Location = new System.Drawing.Point(7, 3);
             this.tabControl1.Name = "tabControl1";
@@ -670,6 +699,53 @@
             this.l_Title.TabIndex = 0;
             this.l_Title.Text = "タイトル";
             // 
+            // tabPage5
+            // 
+            this.tabPage5.Controls.Add(this.button1);
+            this.tabPage5.Controls.Add(this.label24);
+            this.tabPage5.Controls.Add(this.textBox1);
+            this.tabPage5.Controls.Add(this.panel5);
+            this.tabPage5.Controls.Add(this.panel4);
+            this.tabPage5.Controls.Add(this.panel3);
+            this.tabPage5.Controls.Add(this.label19);
+            this.tabPage5.Controls.Add(this.textBox_push);
+            this.tabPage5.Location = new System.Drawing.Point(4, 22);
+            this.tabPage5.Name = "tabPage5";
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage5.Size = new System.Drawing.Size(463, 264);
+            this.tabPage5.TabIndex = 4;
+            this.tabPage5.Text = "詳細設定";
+            this.tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // label19
+            // 
+            this.label19.AutoSize = true;
+            this.label19.Location = new System.Drawing.Point(6, 33);
+            this.label19.Name = "label19";
+            this.label19.Size = new System.Drawing.Size(83, 12);
+            this.label19.TabIndex = 1;
+            this.label19.Text = "PUSH先アドレス";
+            // 
+            // textBox_push
+            // 
+            this.textBox_push.Location = new System.Drawing.Point(97, 30);
+            this.textBox_push.Name = "textBox_push";
+            this.textBox_push.Size = new System.Drawing.Size(220, 19);
+            this.textBox_push.TabIndex = 0;
+            // 
+            // tabPage6
+            // 
+            this.tabPage6.Controls.Add(this.button_list_delete);
+            this.tabPage6.Controls.Add(this.button_list_add);
+            this.tabPage6.Controls.Add(this.listView1);
+            this.tabPage6.Location = new System.Drawing.Point(4, 22);
+            this.tabPage6.Name = "tabPage6";
+            this.tabPage6.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage6.Size = new System.Drawing.Size(463, 264);
+            this.tabPage6.TabIndex = 5;
+            this.tabPage6.Text = "プレイリスト";
+            this.tabPage6.UseVisualStyleBackColor = true;
+            // 
             // tabPage3
             // 
             this.tabPage3.Controls.Add(this.label_version);
@@ -689,6 +765,180 @@
             this.label_version.Size = new System.Drawing.Size(41, 12);
             this.label_version.TabIndex = 0;
             this.label_version.Text = "label19";
+            // 
+            // panel3
+            // 
+            this.panel3.Controls.Add(this.radioButton_permanent_2);
+            this.panel3.Controls.Add(this.label21);
+            this.panel3.Controls.Add(this.radioButton_permanent_1);
+            this.panel3.Location = new System.Drawing.Point(8, 55);
+            this.panel3.Name = "panel3";
+            this.panel3.Size = new System.Drawing.Size(200, 25);
+            this.panel3.TabIndex = 24;
+            // 
+            // radioButton_permanent_2
+            // 
+            this.radioButton_permanent_2.AutoSize = true;
+            this.radioButton_permanent_2.Checked = true;
+            this.radioButton_permanent_2.Location = new System.Drawing.Point(146, 5);
+            this.radioButton_permanent_2.Name = "radioButton_permanent_2";
+            this.radioButton_permanent_2.Size = new System.Drawing.Size(52, 16);
+            this.radioButton_permanent_2.TabIndex = 7;
+            this.radioButton_permanent_2.TabStop = true;
+            this.radioButton_permanent_2.Text = "しない";
+            this.radioButton_permanent_2.UseVisualStyleBackColor = true;
+            // 
+            // label21
+            // 
+            this.label21.AutoSize = true;
+            this.label21.Location = new System.Drawing.Point(0, 7);
+            this.label21.Name = "label21";
+            this.label21.Size = new System.Drawing.Size(85, 12);
+            this.label21.TabIndex = 19;
+            this.label21.Text = "ストリーム永続化";
+            // 
+            // radioButton_permanent_1
+            // 
+            this.radioButton_permanent_1.AutoSize = true;
+            this.radioButton_permanent_1.Location = new System.Drawing.Point(94, 5);
+            this.radioButton_permanent_1.Name = "radioButton_permanent_1";
+            this.radioButton_permanent_1.Size = new System.Drawing.Size(42, 16);
+            this.radioButton_permanent_1.TabIndex = 6;
+            this.radioButton_permanent_1.Text = "する";
+            this.radioButton_permanent_1.UseVisualStyleBackColor = true;
+            // 
+            // panel4
+            // 
+            this.panel4.Controls.Add(this.radioButton_type_2);
+            this.panel4.Controls.Add(this.label22);
+            this.panel4.Controls.Add(this.radioButton_type_1);
+            this.panel4.Location = new System.Drawing.Point(8, 3);
+            this.panel4.Name = "panel4";
+            this.panel4.Size = new System.Drawing.Size(200, 25);
+            this.panel4.TabIndex = 25;
+            // 
+            // radioButton_type_2
+            // 
+            this.radioButton_type_2.AutoSize = true;
+            this.radioButton_type_2.Location = new System.Drawing.Point(146, 5);
+            this.radioButton_type_2.Name = "radioButton_type_2";
+            this.radioButton_type_2.Size = new System.Drawing.Size(53, 16);
+            this.radioButton_type_2.TabIndex = 7;
+            this.radioButton_type_2.Text = "PUSH";
+            this.radioButton_type_2.UseVisualStyleBackColor = true;
+            // 
+            // label22
+            // 
+            this.label22.AutoSize = true;
+            this.label22.Location = new System.Drawing.Point(0, 7);
+            this.label22.Name = "label22";
+            this.label22.Size = new System.Drawing.Size(53, 12);
+            this.label22.TabIndex = 19;
+            this.label22.Text = "配信方法";
+            // 
+            // radioButton_type_1
+            // 
+            this.radioButton_type_1.AutoSize = true;
+            this.radioButton_type_1.Checked = true;
+            this.radioButton_type_1.Location = new System.Drawing.Point(94, 5);
+            this.radioButton_type_1.Name = "radioButton_type_1";
+            this.radioButton_type_1.Size = new System.Drawing.Size(50, 16);
+            this.radioButton_type_1.TabIndex = 6;
+            this.radioButton_type_1.TabStop = true;
+            this.radioButton_type_1.Text = "PULL";
+            this.radioButton_type_1.UseVisualStyleBackColor = true;
+            // 
+            // panel5
+            // 
+            this.panel5.Controls.Add(this.radioButton1);
+            this.panel5.Controls.Add(this.label23);
+            this.panel5.Controls.Add(this.radioButton2);
+            this.panel5.Location = new System.Drawing.Point(8, 86);
+            this.panel5.Name = "panel5";
+            this.panel5.Size = new System.Drawing.Size(200, 25);
+            this.panel5.TabIndex = 25;
+            // 
+            // radioButton1
+            // 
+            this.radioButton1.AutoSize = true;
+            this.radioButton1.Checked = true;
+            this.radioButton1.Location = new System.Drawing.Point(146, 5);
+            this.radioButton1.Name = "radioButton1";
+            this.radioButton1.Size = new System.Drawing.Size(52, 16);
+            this.radioButton1.TabIndex = 7;
+            this.radioButton1.TabStop = true;
+            this.radioButton1.Text = "しない";
+            this.radioButton1.UseVisualStyleBackColor = true;
+            // 
+            // label23
+            // 
+            this.label23.AutoSize = true;
+            this.label23.Location = new System.Drawing.Point(0, 7);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(73, 12);
+            this.label23.TabIndex = 19;
+            this.label23.Text = "ストリーム保存";
+            // 
+            // radioButton2
+            // 
+            this.radioButton2.AutoSize = true;
+            this.radioButton2.Location = new System.Drawing.Point(94, 5);
+            this.radioButton2.Name = "radioButton2";
+            this.radioButton2.Size = new System.Drawing.Size(42, 16);
+            this.radioButton2.TabIndex = 6;
+            this.radioButton2.Text = "する";
+            this.radioButton2.UseVisualStyleBackColor = true;
+            // 
+            // label24
+            // 
+            this.label24.AutoSize = true;
+            this.label24.Location = new System.Drawing.Point(6, 120);
+            this.label24.Name = "label24";
+            this.label24.Size = new System.Drawing.Size(75, 12);
+            this.label24.TabIndex = 27;
+            this.label24.Text = "保存先ファイル";
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(97, 117);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(220, 19);
+            this.textBox1.TabIndex = 26;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(339, 115);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 28;
+            this.button1.Text = "参照";
+            this.button1.UseVisualStyleBackColor = true;
+            // 
+            // listView1
+            // 
+            this.listView1.Location = new System.Drawing.Point(6, 6);
+            this.listView1.Name = "listView1";
+            this.listView1.Size = new System.Drawing.Size(453, 227);
+            this.listView1.TabIndex = 0;
+            this.listView1.UseCompatibleStateImageBehavior = false;
+            // 
+            // button_list_add
+            // 
+            this.button_list_add.Location = new System.Drawing.Point(340, 238);
+            this.button_list_add.Name = "button_list_add";
+            this.button_list_add.Size = new System.Drawing.Size(56, 23);
+            this.button_list_add.TabIndex = 1;
+            this.button_list_add.Text = "追加";
+            this.button_list_add.UseVisualStyleBackColor = true;
+            // 
+            // button_list_delete
+            // 
+            this.button_list_delete.Location = new System.Drawing.Point(402, 238);
+            this.button_list_delete.Name = "button_list_delete";
+            this.button_list_delete.Size = new System.Drawing.Size(55, 23);
+            this.button_list_delete.TabIndex = 2;
+            this.button_list_delete.Text = "削除";
+            this.button_list_delete.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
@@ -717,8 +967,17 @@
             this.panel2.PerformLayout();
             this.tabPage4.ResumeLayout(false);
             this.tabPage4.PerformLayout();
+            this.tabPage5.ResumeLayout(false);
+            this.tabPage5.PerformLayout();
+            this.tabPage6.ResumeLayout(false);
             this.tabPage3.ResumeLayout(false);
             this.tabPage3.PerformLayout();
+            this.panel3.ResumeLayout(false);
+            this.panel3.PerformLayout();
+            this.panel4.ResumeLayout(false);
+            this.panel4.PerformLayout();
+            this.panel5.ResumeLayout(false);
+            this.panel5.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -786,6 +1045,28 @@
         private System.Windows.Forms.Label l_Auther;
         private System.Windows.Forms.TextBox tbx_Title;
         private System.Windows.Forms.Label l_Title;
+        private System.Windows.Forms.TabPage tabPage5;
+        private System.Windows.Forms.Label label19;
+        private System.Windows.Forms.TextBox textBox_push;
+        private System.Windows.Forms.TabPage tabPage6;
+        private System.Windows.Forms.Panel panel4;
+        private System.Windows.Forms.RadioButton radioButton_type_2;
+        private System.Windows.Forms.Label label22;
+        private System.Windows.Forms.RadioButton radioButton_type_1;
+        private System.Windows.Forms.Panel panel3;
+        private System.Windows.Forms.RadioButton radioButton_permanent_2;
+        private System.Windows.Forms.Label label21;
+        private System.Windows.Forms.RadioButton radioButton_permanent_1;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Label label24;
+        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.Panel panel5;
+        private System.Windows.Forms.RadioButton radioButton1;
+        private System.Windows.Forms.Label label23;
+        private System.Windows.Forms.RadioButton radioButton2;
+        private System.Windows.Forms.ListView listView1;
+        private System.Windows.Forms.Button button_list_delete;
+        private System.Windows.Forms.Button button_list_add;
     }
 }
 

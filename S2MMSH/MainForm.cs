@@ -6,6 +6,9 @@ using System.Threading;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using Gst;
+using Gst.BasePlugins;
+using Gst.GLib;
 
 namespace S2MMSH
 {
@@ -19,6 +22,46 @@ namespace S2MMSH
         public ConnectButtonDelegate connectButtonStateDeligate;
         public DisconnectButtonDelegate disconnectButtonStateDeligate;
 
+        /* macro */
+        public const UInt64 LATENCY = 20000000000;  // default latency in nanoseconds
+        public const UInt64 BUFFER_TIMEOUT = 30000000000;  // buffer timeout amount in nanoseconds
+        public const UInt64 CLOCK_TIMEOUT = 60;          // clock timeout amount in seconds
+
+//#define MMS_HOST "localhost"
+//#define MMS_BASE_PORT 47000
+//#define MMS_EX_PORT 48000
+//#define HTTP_OK 200 // httpresponsecode200
+//#define HTTP_BUSY 503 //
+
+//#define MMSH_STATUS_null 0
+//#define MMSH_STATUS_CONNECTED 1
+//#define MMSH_STATUS_HTTP_HEADER_SEND 2
+//#define MMSH_STATUS_ASF_HEADER_SEND 3
+//#define MMSH_STATUS_ASF_DATA_SENDING 4
+
+//#define ASF_STATUS_null 0
+//#define ASF_STATUS_SET_HEADER 1
+//#define ASF_HEADER_BUFSIZE 65535
+
+//#define PATHNAME_SIZE 2048
+
+//#define Debug.PrintMOD
+
+//#ifdef Debug.PrintMOD
+//#define Debug.Print(fmt, ...) g_print(g_strdup_printf("%d: %s",__LINE__, fmt), __VA_ARGS__)
+//#define Debug.PrintLINE() g_print(g_strdup_printf("Debug.PrintLINE : %d\n",__LINE__))
+//#else
+//#define Debug.Print(fmt, ...) g_print("")
+//#define Debug.PrintLINE() g_print("")
+//#endif
+        Boolean sigint_flag = false;
+        UInt64 latency = LATENCY;
+        //int polling_second = POLLING_SECOND;
+        //int stream_amount = STREAM_AMOUNT;
+        //int mms_base_port = MMS_BASE_PORT;
+        //int mms_ex_port = MMS_EX_PORT;
+        //int canvas_width = 3;
+        
         public MainForm()
         {
             InitializeComponent();
@@ -77,6 +120,29 @@ namespace S2MMSH
             //バージョンの取得
             System.Version ver = asm.GetName().Version;
             this.label_version.Text = "Ver. " + ver.ToString() ;
+
+            //詳細表示にする
+            listView1.View = View.Details;
+
+            //ヘッダーを追加する（ヘッダー名、幅、アライメント）
+            listView1.Columns.Add("配信ソース",453);
+
+            ListViewItem itemx1 = new ListViewItem();
+
+            listView1.GridLines = true;
+
+            var path = @"C:\gstreamer";
+            Environment.SetEnvironmentVariable("GST_PLUGIN_PATH", "");
+            Environment.SetEnvironmentVariable("GST_PLUGIN_SYSTEM_PATH", String.Format(@"{0}\bin\plugins", path));
+            Environment.SetEnvironmentVariable("PATH", String.Format(@"C:\Windows;{0}\lib;{0}\bin", path));
+
+            // デバッグログ出力設定
+            Environment.SetEnvironmentVariable("GST_Debug.Print", "*:3");
+            Environment.SetEnvironmentVariable("GST_Debug.Print_FILE", "GstreamerLog.txt");
+            Environment.SetEnvironmentVariable("GST_Debug.Print_DUMP_DOT_DIR", path);
+
+            Gst.Application.Init(); //GStreamerの初期化
+
             
             this.button_disconnect.Enabled = false;
             this.textBox_log.AppendText("アプリケーションが開始しました。\r\n");
@@ -109,6 +175,24 @@ namespace S2MMSH
         // connection
         private void button_exec_Click(object sender, EventArgs e)
         {
+            //永続化する場合
+            if (radioButton_permanent_1.Checked) { 
+                //永続化ストリーム立ち上げ
+                logoutputDelegate("永続化ストリームを作成します。"); 
+
+                //gstreamer準備
+
+
+                
+
+
+            
+
+
+            }
+
+
+
             //this.textBox_log.AppendText("入力ストリームに接続します。\r\n");
             logoutputDelegate("入力ストリームに接続します。"); 
 
@@ -119,7 +203,7 @@ namespace S2MMSH
             this.button_exec.Enabled = false;
 
             // httpserver listening
-            pm.th_server = new Thread(
+            pm.th_server = new System.Threading.Thread(
                 new ThreadStart(HttpThread)
             );
             pm.th_server.Start(); 
@@ -129,11 +213,11 @@ namespace S2MMSH
             {
                 if (pm.th_ffmpeg == null)
                 {
-                    pm.th_ffmpeg = new Thread(new ThreadStart(delegate()
+                    pm.th_ffmpeg = new System.Threading.Thread(new ThreadStart(delegate()
                     {
                         try
                         {
-                            pm.process = new Process();
+                            pm.process = new System.Diagnostics.Process();
                             pm.process.SynchronizingObject = this;
                             //イベントハンドラの追加
                             pm.process.Exited += new EventHandler(p_Exited);
@@ -252,7 +336,7 @@ namespace S2MMSH
                                             bitrate = int.Parse(this.textBox_videorate.Text) * 1000;
                                             audiorate = int.Parse(this.textBox_audiorate.Text) * 1000;
                                         }
-                                        catch (Exception ex)
+                                        catch (Exception)
                                         {
                                             //this.textBox_log.AppendText(ex.Message);
                                             //break;
@@ -539,7 +623,7 @@ namespace S2MMSH
 
                             }
                         }
-                        catch (ThreadAbortException tex) {
+                        catch (ThreadAbortException) {
                             //無視
                         }
                         catch (Exception exx){
@@ -608,7 +692,7 @@ namespace S2MMSH
                 // スレッド自身の削除
                 if (pm.th_ffmpeg != null)
                 {
-                    Thread tmp = pm.th_ffmpeg;
+                    System.Threading.Thread tmp = pm.th_ffmpeg;
                     pm.th_ffmpeg = null;
                     if (tmp.IsAlive)
                         tmp.Abort(); // ここでスレッドは終了
@@ -625,7 +709,7 @@ namespace S2MMSH
 
         private void PrintErrorData(object sender, DataReceivedEventArgs e)
         {
-            Process p = (Process)sender;
+            System.Diagnostics.Process p = (System.Diagnostics.Process)sender;
 
             if (!string.IsNullOrEmpty(e.Data))
                 this.BeginInvoke(new Action<String>(delegate(String str) { this.logoutput(e.Data); }), new object[] { "" }); ;
@@ -930,6 +1014,587 @@ namespace S2MMSH
             }
         }
 
+
+
+        /* tagenya transport */
+        ///* print debug info */
+        //static bool print_element_info(CustomData data)
+        //{
+        //    Iterator ite;
+        //    Element elem;
+        //    int i;
+        //    bool done;
+
+        //    //if (sigint_flag)
+        //    //{
+        //        //sigint_flag = FALSE;
+
+        //        Debug.Print("received SIGINT: print all elements' information. \n");
+        //        Debug.Print("<<<<parent pipeline>>>> \n");
+        //        Debug.Print("pipeline %s states: %d\n", ((Gst.Object)data.pipeline).Name, ((Element)data.pipeline).CurrentState;
+
+        //        ite = ((Gst.Bin)data.pipeline).;
+        //        done = FALSE;
+        //        while (!done)
+        //        {
+        //            switch (gst_iterator_next(ite, (GValue*)&elem))
+        //            {
+        //                case GST_ITERATOR_OK:
+
+        //                    g_print("%s states: %d\n", GST_ELEMENT_NAME(elem), GST_STATE(elem));
+        //                    Debug.Print("base timestamp: %llu  \n", gst_element_get_base_time(elem));
+        //                    Debug.Print("start timestamp: %llu  \n", gst_element_get_start_time(elem));
+
+        //                    break;
+        //                case GST_ITERATOR_RESYNC:
+        //                    gst_iterator_resync(ite);
+        //                    break;
+        //                case GST_ITERATOR_ERROR:
+        //                    done = TRUE;
+        //                    break;
+        //                case GST_ITERATOR_DONE:
+        //                    done = TRUE;
+        //                    break;
+        //            }
+        //        }
+        //        gst_iterator_free(ite);
+
+        //        g_print("<<<<child pipeline>>>> \n");
+
+        //        for (i = 0; i < stream_amount; i++)
+        //        {
+        //            g_print("pipeline %s states: %d\n", GST_ELEMENT_NAME(data->mms[i]->pipeline), GST_STATE(data->mms[i]->pipeline));
+        //            ite = gst_bin_iterate_elements(GST_BIN(data->mms[i]->pipeline));
+        //            done = FALSE;
+        //            while (!done)
+        //            {
+        //                switch (gst_iterator_next(ite, (GValue*)&elem))
+        //                {
+        //                    case GST_ITERATOR_OK:
+
+        //                        g_print("%s states: %d\n", GST_ELEMENT_NAME(elem), GST_STATE(elem));
+        //                        Debug.Print("base timestamp: %llu  \n", gst_element_get_base_time(elem));
+        //                        Debug.Print("start timestamp: %llu  \n", gst_element_get_start_time(elem));
+
+        //                        break;
+        //                    case GST_ITERATOR_RESYNC:
+        //                        gst_iterator_resync(ite);
+        //                        break;
+        //                    case GST_ITERATOR_ERROR:
+        //                        done = TRUE;
+        //                        break;
+        //                    case GST_ITERATOR_DONE:
+        //                        done = TRUE;
+        //                        break;
+        //                }
+        //            }
+        //            gst_iterator_free(ite);
+        //        }
+
+        //        /* write debug info */
+        //        print_pad_capabilities(data->sink, "sink");
+        //        print_pad_capabilities(data->mms[0]->v_appsink, "sink");
+        //    //}
+
+        //    return true;
+
+        //}
+
+        /* quit all generated loops */
+        //void main_loop_quit_all(CustomData data)
+        //{
+        //    //gint i;
+        //    //for (i = 0; i < stream_amount; i++)
+        //    //{
+        //    //    g_main_loop_quit(data.mms[i].loop);
+        //    //}
+        //    data.loop.Quit();
+        //}
+
+        /* bus message from pipeline */
+        static bool
+          bus_call(
+          Gst.Bus bus,
+          Gst.Message msg,
+          CustomData gdata)
+        {
+            CustomData data = gdata;
+            MainLoop loop = data.loop;
+            string[] str;
+            MmsData mmsdata;
+            UInt64 number;
+            System.Object a, b;
+
+            string[] delimiter = { "__" };
+
+            switch (msg.Type)
+            {
+                case MessageType.Element:
+                    Debug.Print("Element message received at parent pipeline\n");
+                    /* unlink mms stream elements */
+                    str = msg.Src.Name.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
+                    //str = String.Split(msg.Src.Name, "__", 2);
+                    if (str[1] != null)
+                    {
+                        /* parse number */
+                        //number = g_ascii_strtoull(str[1], null, 10);
+                        number = UInt64.Parse(str[1]);
+                        Debug.Print("Caught EOS event at %s on #%d\n", msg.Src.Name, number);
+                        mmsdata = data.mms[number];
+
+                        /* dispose */
+                        a = (System.Object)msg.Src;
+                        if (a == (System.Object)mmsdata.a_app_q)
+                        {
+                            mmsdata.a_appsrc.SetState(Gst.State.Null);
+                            mmsdata.a_app_q.SetState(Gst.State.Null);
+                            Element[] ere = { data.pipeline, mmsdata.a_appsrc, mmsdata.a_app_q };
+                            data.pipeline.Remove(ere);
+
+                            mmsdata.prob_hd_a_eos = 0;
+                        }
+                        else if (a == (System.Object)mmsdata.v_app_q)
+                        {
+                            mmsdata.v_appsrc.SetState(Gst.State.Null);
+                            mmsdata.v_app_q.SetState(Gst.State.Null);
+                            Element[] ere = { mmsdata.v_appsrc, mmsdata.v_app_q };
+                            data.pipeline.Remove(ere);
+                            mmsdata.prob_hd_v_eos = 0;
+                        }
+
+                        break;
+                    }
+                    break;
+                case MessageType.Eos:
+                    Debug.Print("End of stream at parent pipeline\n");
+                    /* unlink mms stream elements */
+                    str = msg.Src.Name.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
+                    if (str[1] != null)
+                    {
+                        /* parse number */
+                        number = UInt64.Parse(str[1]);
+                        Debug.Print("Caught EOS event at %s on #%d\n", msg.Src.Name, number);
+                        mmsdata = data.mms[number];
+
+                        /* dispose */
+                        a = (System.Object)msg.Src;
+                        b = (System.Object)mmsdata.a_app_q;
+                        if (a == b)
+                        {
+                            mmsdata.a_appsrc.SetState(Gst.State.Null);
+                            mmsdata.a_app_q.SetState(Gst.State.Null);
+                            Element[] ere = { data.pipeline, mmsdata.a_appsrc, mmsdata.a_app_q };
+                            data.pipeline.Remove(ere);
+
+                            mmsdata.prob_hd_a_eos = 0;
+                        }
+                        else if (a == (System.Object)mmsdata.v_app_q)
+                        {
+                            mmsdata.v_appsrc.SetState(Gst.State.Null);
+                            mmsdata.v_app_q.SetState(Gst.State.Null);
+                            Element[] ere = { mmsdata.v_appsrc, mmsdata.v_app_q };
+                            data.pipeline.Remove(ere);
+                            mmsdata.prob_hd_v_eos = 0;
+                        }
+
+                        break;
+                    }
+
+                    main_loop_quit_all(data);
+                    break;
+
+                case MessageType.Error:
+                    {
+                        //string debug;
+                        Enum error;
+                        Debug.Print("Message received. Type:%s from %s\n", msg.Type, msg.Src.Name);
+                        //gst_message_parse_error(msg, &error, &debug);
+                        msg.ParseError(out error);
+                        Debug.Print("Error received from element %s: %s\n", msg.Src.Name, error);
+                        //Debug.Print("Debugging information: %s\n", debug == null ? debug : "none");
+
+                        /* unlink mms stream elements */
+                        str = msg.Src.Name.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
+                        if (str[1] != null)
+                        {
+                            /* parse number */
+                            number = UInt64.Parse(str[1]);
+                            mmsdata = data.mms[number];
+                            /* remove from bin */
+                            if (mmsdata != null)
+                            {
+                                /* dispose */
+                                dispose_mms_stream(mmsdata);
+
+                            }
+                            else
+                            {
+                                Debug.Print("mms stream #%d isn't find.\n", number);
+                            }
+
+                            //g_error_free(error);
+                            //g_free(debug);
+                            break;
+                        }
+
+                        // if parent stream error coused , close process
+                        //g_error_free(error);
+                        //g_free(debug);
+
+                        main_loop_quit_all(data);
+                        break;
+                    }
+                case MessageType.Warning:
+                    {
+                        //string debug;
+                        Enum error;
+                        Debug.Print("Message received. Type:%s from %s\n", msg.Type, msg.Src.Name);
+                        msg.ParseWarning(out error);
+                        Debug.Print("Warning received from element %s: %s\n", msg.Src.Name, error);
+                        //g_printerr("Debugging information: %s\n", debug ? debug : "none");
+                        break;
+                    }
+                case MessageType.StateChanged:
+                    /* We are only interested in state-changed messages from the pipeline */
+                    {
+                        State old_state, new_state, pending_state;
+
+                        msg.ParseStateChanged(out old_state, out new_state, out pending_state);
+                        //gst_message_parse_state_changed(msg, &old_state, &new_state, &pending_state);
+
+                        Debug.Print("Element %s state changed from %s to %s:\n",
+                          msg.Src.Name, old_state, new_state);
+
+                    }
+                    break;
+                case MessageType.NewClock:
+                    Debug.Print("New Clock Created\n");
+                    break;
+                case MessageType.ClockLost:
+                    Debug.Print("Clock Lost\n");
+                    break;
+                case MessageType.Latency:
+                    Debug.Print("Pipeline required latency.\n");
+                    break;
+                case MessageType.StreamStatus:
+                    {
+                        StreamStatusType type;
+                        Element owner;
+                        msg.ParseStreamStatus(out type, out owner);
+                        //gst_message_parse_stream_status(msg, &type, &owner);
+                        Debug.Print("Stream_status received from element %s type: %d owner:%s\n", 
+                            msg.Src.Name, type, owner.Name);
+                        break;
+                    }
+                default:
+                    Debug.Print("Message received. Type:%s from %s\n", msg.Type, msg.Src.Name);
+                    break;
+            }
+
+            return true;
+        }
+
+        /* bus message from mms pipeline */
+        static bool
+          bus_call_sub(Gst.Bus bus,
+          Gst.Message msg,
+          MmsData gdata)
+        {
+            MmsData mmsdata = gdata;
+            MainLoop loop = mmsdata.loop;
+            string[] str;
+            UInt64 number;
+            // GstPad *pad;
+            CustomData parent = mmsdata.parent;
+            string[] delimiter = { "__" };
+            switch (msg.Type)
+            {
+
+                case MessageType.Eos:
+                    Debug.Print("End of stream at sub stream pipeline\n");
+                    /* unlink mms stream elements */
+                    Debug.Print("GST_OBJECT_NAME (msg->src): %s\n", msg.Src.Name);
+                    str = msg.Src.Name.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
+
+                    if (str[1] != null)
+                    {
+                        /* parse number */
+                        number = UInt64.Parse(str[1]);
+                        Debug.Print("Caught EOS event at %s on #%d\n", msg.Src.Name, number);
+
+                        /* dispose */
+                        dispose_mms_stream(mmsdata);
+                        break;
+                    }
+                    break;
+
+                case MessageType.Error:
+                    {
+                        //gchar* debug;
+                        Enum error;
+                        Debug.Print("Message received. Type:%s from %s\n", msg.Type, msg.Src.Name);
+                        msg.ParseError(out error);
+                        Debug.Print("Error received from element %s: %s\n", msg.Src.Name, error);
+                        //g_printerr("Debugging information: %s\n", debug ? debug : "none");
+                        /* dispose */
+                        dispose_mms_stream(mmsdata);
+
+                        break;
+                    }
+                case MessageType.Warning:
+                    {
+                        //gchar* debug;
+                        Enum error;
+                        Debug.Print("Message received. Type:%s from %s\n", msg.Type, msg.Src.Name);
+                        msg.ParseWarning(out error);
+                        //gst_message_parse_warning(msg, &error, &debug);
+                        Debug.Print("Warning received from element %s: %s\n", msg.Src.Name, error);
+                        //g_printerr("Debugging information: %s\n", debug ? debug : "none");
+                        break;
+                    }
+                case MessageType.StateChanged:
+                    /* We are only interested in state-changed messages from the pipeline */
+                    {
+                        State old_state, new_state, pending_state;
+                        msg.ParseStateChanged(out old_state, out new_state, out pending_state);
+
+                        Debug.Print("Element %s state changed from %s to %s:\n",
+                          msg.Src.Name, old_state, new_state);
+                    }
+                    break;
+                case MessageType.NewClock:
+                    Debug.Print("New Clock Created\n");
+                    break;
+                case MessageType.ClockLost:
+                    Debug.Print("Clock Lost\n");
+                    break;
+                case MessageType.Latency:
+                    Debug.Print("Pipeline required latency.\n");
+                    break;
+                case MessageType.StreamStatus:
+                    {
+                        StreamStatusType type;
+                        Element owner;
+                        msg.ParseStreamStatus(out type, out owner);
+                        Debug.Print("Stream_status received from element %s type: %d owner:%s\n", msg.Src.Name, type, owner.Name);
+                        break;
+                    }
+                default:
+                    Debug.Print("Message received. Type:%s from %s\n", msg.Type, msg.Src.Name);
+                    break;
+            }
+
+            return true;
+        }
+
+        /* This function will be called by the pad-added signal */
+        static void pad_added_handler1(Element src, Pad new_pad, CustomData data)
+        {
+            Pad vsink_pad = data.scale1.GetStaticPad("sink");
+            Caps sink_pad_caps = null;
+
+            PadLinkReturn ret = PadLinkReturn.Noformat;
+            Caps new_pad_caps = null;
+            Structure new_pad_struct = null;
+            string new_pad_type = null;
+
+            Debug.Print("Received new pad '%s' from '%s':\n", new_pad.Name, src.Name);
+
+            /* Check the new pad's type */
+            //new_pad_caps   = gst_pad_get_caps (new_pad);
+            //new_pad_caps = gst_pad_query_caps(new_pad, null);
+            new_pad_caps = new_pad.Caps;
+            //new_pad_struct = gst_caps_get_structure(new_pad_caps, 0);
+            new_pad_struct = new_pad_caps[0];
+            //new_pad_type = gst_structure_get_name(new_pad_struct);
+            new_pad_type = new_pad_struct.Name;
+
+            //sink_pad_caps = gst_pad_get_caps (vsink_pad);
+            //sink_pad_caps = gst_pad_query_caps(vsink_pad, NULL);
+            sink_pad_caps = vsink_pad.Caps;
+            
+            /* Attempt the link */
+            if (new_pad_type.StartsWith("audio/x-raw"))
+            {
+                //goto exig;
+            }
+            else
+            {
+                //ret = gst_pad_link(new_pad, vsink_pad);
+                ret = new_pad.Link(vsink_pad);
+            }
+
+            if (ret != PadLinkReturn.Ok)
+            {
+                Debug.Print("  Type is '%s' but link failed.\n", new_pad_type);
+            }
+            else
+            {
+                Debug.Print("  Link succeeded (type '%s').\n", new_pad_type);
+            }
+
+        //exig:
+            /* Unreference the new pad's caps, if we got them */
+            //if (new_pad_caps != null)
+            //    gst_caps_unref(new_pad_caps);
+
+            //if (sink_pad_caps != null)
+            //    gst_caps_unref(sink_pad_caps);
+
+            ///* Unreference the sink pad */
+            //gst_object_unref(vsink_pad);
+        }
+
+        /* This function will be called by the pad-added signal */
+        /* for mms stream */
+        static void mms_pad_added_handler(Element src, Pad new_pad, MmsData data)
+        {
+            Pad vsink_pad;
+            Pad asink_pad;
+
+            PadLinkReturn ret = PadLinkReturn.Noformat;
+            Caps new_pad_caps = null;
+            Structure new_pad_struct = null;
+            string new_pad_type = null;
+
+            Debug.Print("Received new pad '%s' from '%s':\n", new_pad.Name, src.Name);
+
+            /* Check the new pad's type */
+            //new_pad_caps   = gst_pad_get_caps (new_pad);
+            //new_pad_caps = gst_pad_query_caps(new_pad, NULL);
+            //new_pad_struct = gst_caps_get_structure(new_pad_caps, 0);
+            //new_pad_type = gst_structure_get_name(new_pad_struct);
+            new_pad_caps = new_pad.Caps;
+            new_pad_struct = new_pad_caps[0];
+            new_pad_type = new_pad_struct.Name;
+
+            /* Attempt the link */
+            if (new_pad_type.StartsWith("audio/x-raw"))
+            {
+                Element[] ele = { data.a_queue, data.a_convert, data.a_resample, data.a_appsink };
+                data.pipeline.Add(ele);
+                data.a_queue.Link(data.a_convert);
+                data.a_convert.Link(data.a_resample);
+                data.a_resample.Link(data.a_appsink);
+
+                asink_pad = data.a_queue.GetStaticPad("sink");
+                ret = new_pad.Link(asink_pad);
+
+                data.a_appsink.SetState(State.Playing);
+                data.a_resample.SetState(State.Playing);
+                data.a_convert.SetState(State.Playing);
+                data.a_queue.SetState(State.Playing);
+
+                //gst_object_unref(asink_pad);
+
+            }
+            else if (new_pad_type.StartsWith("video"))
+            {
+                Element[] ele = { data.v_queue, data.colorspace, data.scale, data.rate, data.filter, data.videobox, data.v_appsink, };
+                data.pipeline.Add(ele);
+                data.v_queue.Link(data.colorspace);
+                data.colorspace.Link(data.scale);
+                data.scale.Link(data.filter);
+                data.filter.Link(data.videobox);
+                data.videobox.Link(data.v_appsink);
+                vsink_pad = data.v_queue.GetStaticPad("sink");
+                ret = new_pad.Link(vsink_pad);
+
+                data.v_appsink.SetState(State.Playing);
+                data.videobox.SetState(State.Playing);
+                data.filter.SetState(State.Playing);
+                data.rate.SetState(State.Playing);
+                data.scale.SetState(State.Playing);
+                data.colorspace.SetState(State.Playing);
+                data.v_queue.SetState(State.Playing);
+
+                //gst_object_unref(vsink_pad);
+            }
+
+            if (ret != PadLinkReturn.Ok)
+            {
+                Debug.Print("  Type is '%s' but link failed.\n", new_pad_type);
+            }
+            else
+            {
+                Debug.Print("  Link succeeded (type '%s').\n", new_pad_type);
+            }
+
+            /* Unreference the new pad's caps, if we got them */
+            //if (new_pad_caps != NULL)
+            //    gst_caps_unref(new_pad_caps);
+        }
+
+
+
+        /* quit all generated loops */
+        static public void main_loop_quit_all(CustomData data)
+        {
+            data.mms[0].loop.Quit();
+            data.loop.Quit();
+        }
+
+        /* Dispose mms stream and appsrc injection */
+        static void
+          dispose_mms_stream(MmsData mmsdata)
+        {
+            Pad pad;
+            CustomData parent = mmsdata.parent;
+            //FlowReturn ret;
+            //gboolean ret;
+
+            Debug.Print("Dispose mms stream on #%d stream...\n", mmsdata.number);
+
+            pad = mmsdata.source.GetStaticPad("src");
+            if (pad == null) Debug.Print("fail to get pad.\n");
+            //gst_pad_remove_buffers_probe (pad, mmsdata->prob_hd);
+            pad.RemoveEventProbe(mmsdata.prob_hd);
+            //gst_pad_remove_probe(pad, mmsdata->prob_hd);
+            mmsdata.prob_hd = 0;
+            
+            //gst_object_unref(pad);
+            //gst_element_set_state(mmsdata->pipeline, GST_STATE_null);
+            mmsdata.pipeline.SetState(Gst.State.Null);
+
+            // main
+            Element[] ele = {mmsdata.source, mmsdata.queue, mmsdata.decoder};
+            mmsdata.pipeline.Remove(ele);
+
+            // video
+
+            if (mmsdata.pipeline.GetByName(mmsdata.v_appsink.Name) != null)
+            {
+                Element[] ele2 = { mmsdata.v_queue, mmsdata.scale, mmsdata.rate, mmsdata.filter, mmsdata.videobox, mmsdata.v_appsink };
+                mmsdata.pipeline.Remove(ele2);
+            }
+
+            // audio
+            if (mmsdata.pipeline.GetByName(mmsdata.a_appsink.Name) != null)
+            {
+                Element[] ele2 = { mmsdata.a_queue, mmsdata.a_convert, mmsdata.a_resample, mmsdata.a_appsink };
+                mmsdata.pipeline.Remove(ele2);
+            }
+
+            mmsdata.buffer_time = 0;
+            mmsdata.clock = (long)Clock.Second;
+
+            /* dispose appsrc */
+
+            // video
+            if (mmsdata.pipeline.GetByName(mmsdata.v_appsink.Name) != null)
+            {
+                mmsdata.v_appsrc.Emit("end-of-stream");
+                //g_signal_emit_by_name(mmsdata->v_appsrc, "end-of-stream", &ret);
+            }
+
+            // audio
+            if (mmsdata.pipeline.GetByName(mmsdata.a_appsink.Name) != null)
+            {
+                mmsdata.a_appsrc.Emit("end-of-stream");
+            }
+
+            Debug.Print("Disposed #%d stream...\n", mmsdata.number);
+        }
     }
 }
 
@@ -941,3 +1606,4 @@ namespace S2MMSH
 //ffmpegコンソール直修
 //バージョン管理
 //プレイリストクラスの生成
+//ストリーム保存
