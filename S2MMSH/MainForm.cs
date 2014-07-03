@@ -9,6 +9,7 @@ using System.Text;
 using Gst;
 using Gst.BasePlugins;
 using Gst.GLib;
+using System.Reflection;
 
 namespace S2MMSH
 {
@@ -54,13 +55,19 @@ namespace S2MMSH
 //#define Debug.Print(fmt, ...) g_print("")
 //#define Debug.PrintLINE() g_print("")
 //#endif
-        Boolean sigint_flag = false;
+        //Boolean sigint_flag = false;
         UInt64 latency = LATENCY;
         //int polling_second = POLLING_SECOND;
         //int stream_amount = STREAM_AMOUNT;
         //int mms_base_port = MMS_BASE_PORT;
         //int mms_ex_port = MMS_EX_PORT;
         //int canvas_width = 3;
+
+        //永続化ストリーム構造体
+        private static CustomData cData = null;
+        private static MmsData mData = null;
+
+        public static System.Diagnostics.Process p = System.Diagnostics.Process.GetCurrentProcess();
         
         public MainForm()
         {
@@ -175,7 +182,8 @@ namespace S2MMSH
         // connection
         private void button_exec_Click(object sender, EventArgs e)
         {
-            //永続化する場合
+            //永続化する場合→常に永続化
+            //backgroundストリームが走っていなければ
             if (radioButton_permanent_1.Checked) { 
                 //永続化ストリーム立ち上げ
                 logoutputDelegate("永続化ストリームを作成します。"); 
@@ -1297,10 +1305,11 @@ namespace S2MMSH
         /* bus message from mms pipeline */
         static bool
           bus_call_sub(Gst.Bus bus,
-          Gst.Message msg,
-          MmsData gdata)
+          Gst.Message msg)
+          //  ,
+          //MmsData gdata)
         {
-            MmsData mmsdata = gdata;
+            MmsData mmsdata = mData;
             MainLoop loop = mmsdata.loop;
             string[] str;
             UInt64 number;
@@ -1525,6 +1534,155 @@ namespace S2MMSH
             //    gst_caps_unref(new_pad_caps);
         }
 
+        static bool
+  cb_catch_buffer(Gst.Pad pad,
+  Gst.Buffer buffer)
+        {
+            //gint64 pos;
+            Int64 pos;
+            MmsData mmsdata = mData ;
+            CustomData data = cData;
+            Gst.Format format = Gst.Format.Time;
+
+            //if (gst_element_query_position(GST_ELEMENT_CAST(data->pipeline), format, &pos))
+            if( data.pipeline.QueryPosition(ref format, out pos))
+            {
+                //mmsdata->buffer_time = pos; // pipeline running time
+                mmsdata.buffer_time = pos;
+            }
+            mmsdata.clock = p.TotalProcessorTime.Ticks; // apprication running time
+            //g_print("buffer passed through!\n");
+            return true;
+        }
+
+        /* video appsrc has sweeped */
+        static bool cb_catch_v_eos(
+          Gst.Pad pad,
+          Gst.Event e)
+        {
+            MmsData mmsdata = mData;
+            CustomData parent = cData;
+
+            /* if eos-event*/
+            if (e.Type == EventType.Eos)
+            {
+                Gst.Message message;
+                Gst.Bus bus;
+                //gst_pad_remove_event_probe (pad, mmsdata->prob_hd_v_eos);
+                //gst_pad_remove_probe (pad, mmsdata->prob_hd_v_eos);
+                pad.RemoveEventProbe(mmsdata.prob_hd_v_eos);
+                // send message to pipeline
+                //message = gst_message_new_element(GST_OBJECT(mmsdata->v_app_q), NULL);
+                message = Gst.Message.NewElement(mmsdata.v_app_q, null);
+                //bus = gst_pipeline_get_bus (GST_PIPELINE (parent->pipeline));
+                bus = parent.pipeline.Bus;
+                //gst_bus_post (bus, message);
+                bus.Post(message);
+                //gst_object_unref (bus);
+            }
+            return true;
+        }
+
+        /* audio appsrc has sweeped */
+        static bool cb_catch_a_eos(
+          Gst.Pad pad,
+          Gst.Event e)
+        {
+            MmsData mmsdata = mData;
+            CustomData parent = cData;
+
+            /* if eos-event*/
+            if (e.Type == EventType.Eos)
+            {
+                Gst.Message message;
+                Gst.Bus bus;
+                //gst_pad_remove_event_probe (pad, mmsdata->prob_hd_a_eos);
+                //gst_pad_remove_probe (pad, mmsdata->prob_hd_a_eos);
+                pad.RemoveEventProbe(mmsdata.prob_hd_a_eos);
+                // send message to pipeline
+                //message = gst_message_new_element(GST_OBJECT(mmsdata->a_app_q) ,NULL);
+                message = Gst.Message.NewElement(mmsdata.a_app_q, null);
+                //bus = gst_pipeline_get_bus (GST_PIPELINE (parent->pipeline));
+                bus = parent.pipeline.Bus;
+                //gst_bus_post (bus, message);
+                bus.Post(message);
+                //gst_object_unref (bus);
+            }
+            return true;
+        }
+
+        /* Dispose mms stream and appsrc injection */
+        void
+          dispose_mms_stream()
+        {
+            MmsData mmsdata = mData;
+            Gst.Pad pad;
+            CustomData parent = cData;
+            //Gst.FlowReturn ret;
+            //gboolean ret;
+
+            //Debug.Print("Dispose mms stream on #%d stream...\n", mmsdata->number);
+
+            //pad = gst_element_get_static_pad(mmsdata->source, "src");
+            pad = mmsdata.source.GetStaticPad("src");
+            if (pad == null) Debug.Print("fail to get pad.\n");
+            //gst_pad_remove_buffer_probe (pad, mmsdata->prob_hd);
+            //gst_pad_remove_probe(pad, mmsdata->prob_hd);
+            pad.RemoveBufferProbe(mmsdata.prob_hd);
+            mmsdata.prob_hd = 0;
+            //gst_object_unref(pad);
+            //gst_element_set_state(mmsdata->pipeline, GST_STATE_NULL);
+            mmsdata.pipeline.SetState(State.Null);
+
+            // main
+            //gst_bin_remove_many(GST_BIN(mmsdata->pipeline),
+            //  mmsdata->source, mmsdata->queue, mmsdata->decoder,
+            //  NULL);
+            mmsdata.pipeline.Remove(mmsdata.source, mmsdata.queue, mmsdata.decoder);
+
+            // video
+            //if (gst_bin_get_by_name(GST_BIN(mmsdata->pipeline), GST_ELEMENT_NAME(mmsdata->v_appsink)) != NULL)
+            if(mmsdata.pipeline.GetByName(mmsdata.v_appsink.Name) != null)
+            {
+                //gst_bin_remove_many(GST_BIN(mmsdata->pipeline),
+                //  mmsdata->v_queue, mmsdata->scale, mmsdata->rate, mmsdata->filter, mmsdata->videobox, mmsdata->v_appsink,
+                //  NULL);
+                mmsdata.pipeline.Remove(mmsdata.v_queue, mmsdata.scale, mmsdata.rate, mmsdata.filter, mmsdata.videobox, mmsdata.v_appsink);
+            }
+
+            // audio
+            //if (gst_bin_get_by_name(GST_BIN(mmsdata->pipeline), GST_ELEMENT_NAME(mmsdata->a_appsink)) != NULL)
+            if (mmsdata.pipeline.GetByName(mmsdata.a_appsink.Name) != null)
+            {
+                //gst_bin_remove_many(GST_BIN(mmsdata->pipeline),
+                //  mmsdata->a_queue, mmsdata->a_convert, mmsdata->a_resample, mmsdata->a_appsink,
+                //  NULL);
+                mmsdata.pipeline.Remove(mmsdata.a_queue, mmsdata.a_convert, mmsdata.a_resample, mmsdata.a_appsink);
+            }
+
+            mmsdata.buffer_time = 0;
+            mmsdata.clock = p.TotalProcessorTime.Ticks;
+
+            /* dispose appsrc */
+
+            // video
+            //if (gst_bin_get_by_name(GST_BIN(parent->pipeline), GST_ELEMENT_NAME(mmsdata->v_appsrc)) != NULL)
+            if(parent.pipeline.GetByName(mmsdata.v_appsrc.Name) != null)
+            {
+                //g_signal_emit_by_name(mmsdata->v_appsrc, "end-of-stream", &ret);
+                mmsdata.v_appsrc.Emit("end-of-stream");
+            }
+
+            // audio
+            //if (gst_bin_get_by_name(GST_BIN(parent->pipeline), GST_ELEMENT_NAME(mmsdata->a_appsrc)) != NULL)
+            if (parent.pipeline.GetByName(mmsdata.a_appsrc.Name) != null)
+            {
+                //g_signal_emit_by_name(mmsdata->a_appsrc, "end-of-stream", &ret);
+                mmsdata.a_appsrc.Emit("end-of-stream");
+            }
+
+            Debug.Print("Disposed MMS stream...\n");
+        }
 
 
         /* quit all generated loops */
@@ -1576,7 +1734,7 @@ namespace S2MMSH
             }
 
             mmsdata.buffer_time = 0;
-            mmsdata.clock = (long)Clock.Second;
+            mmsdata.clock = p.TotalProcessorTime.Ticks;
 
             /* dispose appsrc */
 
@@ -1595,6 +1753,285 @@ namespace S2MMSH
 
             Debug.Print("Disposed #%d stream...\n", mmsdata.number);
         }
+
+        bool
+         //mms_loop(MmsData mmsdata)
+         mms_loop()
+        {
+            MmsData mmsdata = mData;
+            CustomData parent = cData;
+            uint i = mmsdata.number;
+            Pad pad;
+            //int status;
+
+            //DEBUG ("Polling for #%d stream...\n", i);
+
+            /* timeout check */
+            /* If buffer idle time > timeout_length then despose mms stream */
+
+            Gst.State state;
+            mmsdata.source.GetState(out state, 60);
+
+            //if (gst_bin_get_by_name(GST_BIN(mmsdata->pipeline), GST_ELEMENT_NAME(mmsdata->source)) != NULL
+            if (mmsdata.pipeline.GetByName(mmsdata.source.Name) != null
+              )
+            {
+                long c_pos; //current position
+                Gst.Format format = Gst.Format.Time;
+                //long c_clock = clock();
+                long c_clock = p.TotalProcessorTime.Ticks;
+
+                parent.pipeline.QueryPosition(ref format, out c_pos);
+                //gst_element_query_position(parent->pipeline, format, &c_pos); // current position
+
+                /* If state isn't PLAYING,  */
+                
+
+                if (state == Gst.State.Playing &&
+                  mmsdata.buffer_time > 0 &&
+                  c_pos - mmsdata.buffer_time > (long)BUFFER_TIMEOUT
+                  )
+                {
+                    /* dispose */
+                    Debug.Print("Timed out: perhaps no more buffer exists. \n");
+                    dispose_mms_stream(mmsdata);
+
+                }
+                /* Force timeout */
+                else if ((c_clock - mmsdata.clock) / 1000 > (long)CLOCK_TIMEOUT
+                  )
+                {
+                    /* dispose */
+                    Debug.Print("Timed out: stream has stopped over timeout range. \n");
+
+                    dispose_mms_stream(mmsdata);
+                }
+            }
+
+            /* IF the pipeline already has this mms source, there's no porocess to do */
+
+            if (mmsdata.pipeline.GetByName(mmsdata.source.Name) == null &&
+              (int)state <= 1)
+            { // NULL
+                Bus bus;
+
+                ///* http status check */
+                //status = httptest(g_strdup_printf("http://%s", mmsdata->mms_location));
+
+                ////status=-1;
+
+                //if (status < 0)
+                //{
+                //    DEBUG("no #%d mms stream yet\n", mmsdata->number);
+                //    return TRUE;
+                //}
+
+                //if (status == HTTP_BUSY)
+                //{
+                //    DEBUG("mms stream #%d has already connected\n", mmsdata->number);
+                //    return TRUE;
+                //}
+
+                /* Add elements to mms-pipeline */
+                mmsdata.pipeline.Add(mmsdata.source, mmsdata.queue, mmsdata.decoder);
+                //gst_bin_add_many(GST_BIN(mmsdata->pipeline),
+                //  mmsdata->source, mmsdata->queue, mmsdata->decoder,
+                //  NULL);
+
+                /* link the elements together */
+                mmsdata.source.Link(mmsdata.queue);
+                mmsdata.queue.Link(mmsdata.decoder);
+                //gst_element_link_many(mmsdata->source, mmsdata->queue, mmsdata->decoder, NULL);
+
+                /* Set the pipeline to "playing" state. */
+                bus = mmsdata.pipeline.Bus;
+                //MethodInfo mi = typeof(MainForm).GetMethod("bus_call_sub", BindingFlags.Static);
+
+                ////bus = gst_pipeline_get_bus(GST_PIPELINE(mmsdata->pipeline));
+                //Delegate func = BusFunc.CreateDelegate(typeof(BusFunc), mi);
+                //bus.AddWatch((BusFunc)func);
+                bus.AddWatch(new BusFunc(bus_call_sub));
+                //gst_bus_add_watch(bus, bus_call_sub, mmsdata);
+                //gst_object_unref(bus);
+                
+                /* capture the buffer */
+                pad = mmsdata.source.GetStaticPad("src");
+                //pad = gst_element_get_static_pad(mmsdata->source, "src");
+                //mmsdata->prob_hd = gst_pad_add_buffer_probe (pad, (GCallback) cb_catch_buffer, mmsdata);
+                mmsdata.prob_hd = pad.AddBufferProbe(
+                    cb_catch_buffer);
+                //mmsdata->prob_hd = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback)cb_catch_buffer, mmsdata, NULL);
+                //gst_object_unref(pad);
+
+                /* set clock*/
+                mmsdata.clock = p.TotalProcessorTime.Ticks;
+                //mmsdata->clock = clock();
+
+                /* set latency */
+                if (!mmsdata.pipeline.SendEvent(Gst.Event.NewLatency(latency)))
+                    Debug.Print("latency set failed\n");
+
+                mmsdata.pipeline.SetState(Gst.State.Playing);
+                //gst_element_set_state(mmsdata->pipeline, GST_STATE_PLAYING);
+
+            }
+
+            return true;
+        }
+
+        /* The appsink has received a buffer */
+        public void v_new_buffer(Gst.Element sink )
+        {
+            MmsData mmsdata = mData;
+            CustomData parent = cData;
+            Gst.Buffer buffer = new Gst.Buffer();
+            //Gst.FlowReturn ret;
+
+            //Gst.PadTemplate pad_template;
+            Gst.Pad mixer_pad;
+            Gst.Pad videobox_pad;
+            Gst.Pad pad;
+
+            
+            int i = (int)mmsdata.number;
+            Gst.State state;
+            mmsdata.v_appsrc.GetState(out state, 60);
+
+            if (parent.pipeline.GetByName(mmsdata.v_appsrc.Name) == null &&
+              (int)state <= 1 && mmsdata.prob_hd_v_eos == 0)
+            {
+                parent.pipeline.Add(mmsdata.v_appsrc, mmsdata.v_app_q);
+                Gst.Element.Link(mmsdata.v_appsrc, mmsdata.v_app_q);
+
+                /* Manually link the Element, which has "Request" pads */
+                /* video stream */
+                //pad_template = parent.mixer.GetPadTemplate("sink_%d");
+                //pad_template = gst_element_class_get_pad_template(GST_ELEMENT_GET_CLASS(parent->mixer), "sink_%d");
+                mixer_pad = parent.mixer.GetRequestPad("sink_%d");
+                //mixer_pad = gst_element_request_pad(parent->mixer, pad_template, NULL, NULL);
+                Debug.Print("Obtained request pad %s for video mixer.\n", mixer_pad.Name);
+                mixer_pad["xpos"] = mmsdata.width;
+                mixer_pad["ypos"] = mmsdata.height;
+                
+                //g_object_set(G_OBJECT(mixer_pad), "xpos", mmsdata->width * (i % canvas_width), "ypos",
+                //  mmsdata->height * (i / canvas_width), NULL);
+                videobox_pad = mmsdata.v_app_q.GetStaticPad("src");
+                //videobox_pad = gst_element_get_static_pad(mmsdata->v_app_q, "src");
+
+
+                if (videobox_pad.Link(mixer_pad) != PadLinkReturn.Ok)
+                {
+                    Debug.Print("Cannot be linked.\n");
+                }
+                //gst_object_unref(videobox_pad);
+                //gst_object_unref(pad_template);
+                //gst_object_unref(mixer_pad);
+
+                /* install new probe for EOS */
+                pad = mmsdata.v_app_q.GetStaticPad("src");
+                //pad = gst_element_get_static_pad(mmsdata->v_app_q, "src");
+                //mmsdata->prob_hd_v_eos = gst_pad_add_event_probe (pad, G_CALLBACK(cb_catch_v_eos), mmsdata);
+                mmsdata.prob_hd_v_eos = pad.AddEventProbe(cb_catch_v_eos);
+                //mmsdata->prob_hd_a_eos = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
+                //                                            (GstPadProbeCallback)cb_catch_v_eos, mmsdata, NULL);
+                //gst_object_unref(pad);
+                mmsdata.v_appsrc.SetState(State.Playing);
+                mmsdata.v_app_q.SetState(State.Playing);
+                //gst_element_set_state(mmsdata->v_appsrc, GST_STATE_PLAYING);
+                //gst_element_set_state(mmsdata->v_app_q, GST_STATE_PLAYING);
+
+            }
+            else if (state == State.Playing)
+            {
+                //gint64 pos;
+                //Gst.Format format = Gst.Format.Time;
+                sink.Emit("pull-sample", buffer);
+                //g_signal_emit_by_name(sink, "pull-sample", &buffer);
+
+                mmsdata.v_appsrc.Emit("push-buffer", buffer);
+                //g_signal_emit_by_name(mmsdata->v_appsrc, "push-buffer", buffer, &ret);
+                //gst_buffer_unref(buffer);
+            }
+        }
+        void a_new_buffer(Gst.Element sink)
+        {
+            Gst.Buffer buffer = new Gst.Buffer();
+            //Gst.FlowReturn ret;
+
+            //Gst.PadTemplate pad_template;
+            Gst.Pad mixer_pad;
+            Gst.Pad audio_pad;
+            Gst.Pad pad;
+            CustomData parent = cData;
+            MmsData mmsdata = mData;
+            //int i = mmsdata.number;
+            Gst.State state;
+            mmsdata.a_appsrc.GetState(out state, 60);
+
+            if (parent.pipeline.GetByName(mmsdata.a_appsrc.Name) == null &&
+              (int)state <= 1 && mmsdata.prob_hd_a_eos == 0)
+            //if (gst_bin_get_by_name(GST_BIN(parent->pipeline), GST_ELEMENT_NAME(mmsdata->a_appsrc)) == NULL &&
+            //  GST_STATE(mmsdata->a_appsrc) <= 1 && mmsdata->prob_hd_a_eos == 0)
+            {
+                parent.pipeline.Add(mmsdata.a_appsrc, mmsdata.a_app_q);
+                //gst_bin_add_many(GST_BIN(parent->pipeline),
+                //  mmsdata->a_appsrc, mmsdata->a_app_q,
+                //  NULL);
+                Gst.Element.Link(mmsdata.a_appsrc, mmsdata.a_app_q);
+
+                //gst_element_link_many(mmsdata->a_appsrc, mmsdata->a_app_q, NULL);
+                /* Manually link the Element, which has "Request" pads */
+
+                /* audio stream */
+                //pad_template = gst_element_class_get_pad_template(GST_ELEMENT_GET_CLASS(parent->a_mixer), "sink%d");
+                //mixer_pad = gst_element_request_pad(parent->a_mixer, pad_template, NULL, NULL);
+                //g_print("Obtained request pad %s for audio mixer.\n", gst_pad_get_name(mixer_pad));
+                //audio_pad = gst_element_get_static_pad(mmsdata->a_app_q, "src");
+                //if (gst_pad_link(audio_pad, mixer_pad) != GST_PAD_LINK_OK)
+                //{
+                //    g_printerr("Cannot be linked.\n");
+                //}
+                //gst_object_unref(audio_pad);
+                //gst_object_unref(pad_template);
+                //gst_object_unref(mixer_pad);
+
+                mixer_pad = parent.a_mixer.GetRequestPad("sink%d");
+                //mixer_pad = gst_element_request_pad(parent->mixer, pad_template, NULL, NULL);
+                Debug.Print("Obtained request pad %s for audio mixer.\n", mixer_pad.Name);
+                audio_pad = mmsdata.a_app_q.GetStaticPad("src");
+                if (audio_pad.Link(mixer_pad) != PadLinkReturn.Ok)
+                {
+                    Debug.Print("Cannot be linked.\n");
+                }
+
+                /* install new probe for EOS */
+                pad = mmsdata.a_app_q.GetStaticPad("src");
+                //pad = gst_element_get_static_pad(mmsdata->a_app_q, "src");
+                //mmsdata->prob_hd_a_eos = gst_pad_add_event_probe (pad, G_CALLBACK(cb_catch_a_eos), mmsdata);
+                //mmsdata->prob_hd_a_eos = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
+                //                                            (GstPadProbeCallback)cb_catch_a_eos, mmsdata, NULL);
+                mmsdata.prob_hd_a_eos = pad.AddEventProbe(cb_catch_a_eos);
+                //gst_object_unref(pad);
+                mmsdata.a_appsrc.SetState(State.Playing);
+                mmsdata.a_app_q.SetState(State.Playing);
+                //gst_element_set_state(mmsdata->a_appsrc, GST_STATE_PLAYING);
+                //gst_element_set_state(mmsdata->a_app_q, GST_STATE_PLAYING);
+
+            }
+            else if (state == State.Playing)
+            {
+                //gint64 pos;
+                //Gst.Format format = Gst.Format.Time;
+                //g_signal_emit_by_name(sink, "pull-sample", &buffer);
+                sink.Emit("pull-sample", buffer);
+                //g_signal_emit_by_name(mmsdata->a_appsrc, "push-buffer", buffer, &ret);
+                mmsdata.a_appsrc.Emit("push-buffer", buffer);
+                //gst_buffer_unref(buffer);
+            }
+        }
+
+
+
     }
 }
 
