@@ -36,6 +36,7 @@ namespace S2MMSH
                 int recvLen = 0;
                 try
                 {
+                    while (!mClient.Poll(100, SelectMode.SelectRead)) {}
                     while (mClient.Available > 0)
                     {
                         recvLen += mClient.Receive(buffer);
@@ -68,95 +69,25 @@ namespace S2MMSH
                 String httpHeader = null;
                 byte[] httpHeaderBuffer = new byte[4096];
 
-                if (asfData.asf_status == ASF_STATUS.ASF_STATUS_SET_HEADER && // asfヘッダ登録済み
-                    asfData.mmsh_status != MMSH_STATUS.MMSH_STATUS_ASF_DATA_SENDING) // クライアントなし
+                if (asfData.asf_status == ASF_STATUS.ASF_STATUS_SET_HEADER) // asfヘッダ登録済み
                 {
-                    if (message.Contains("stream-switch"))
-                    {
-                        httpHeader = String.Format(
-                            "HTTP/1.0 200 OK\r\n" +
-                            "Server: Rex/12.0.7601.17514\r\n" +
-                            "Cache-Control: no-cache\r\n" +
-                            "Pragma: no-cache\r\n" +
-                            "Pragma: client-id=2236067900\r\n" +
-                            "Pragma: features=\"broadcast,playlist\"\n" +
-                            "Content-Type: application/x-mms-framed\r\n" +
-                            "Connection: Keep-Alive\r\n" +
-                            "\r\n"
-                        );
-
-                        httpHeaderBuffer = Encoding.UTF8.GetBytes(httpHeader);
-                        mClient.Send(httpHeaderBuffer);
-                        if (message.Contains("Kagamin"))
-                        {
-                            mClient.Send(asfData.asf_header, asfData.asf_header_size, SocketFlags.None);
-                            Console.WriteLine("ASF header sent.");
-                        }
-                        asfData.mms_sock = mClient; //早い者勝ち
-                        asfData.mmsh_status = MMSH_STATUS.MMSH_STATUS_ASF_HEADER_SEND;
-                    }
-                    else if (message.Contains("NSPlayer"))
-                    {
-                        if (message.Contains("kagami"))
-                        {
-                            httpHeader = String.Format(
-                                   "HTTP/1.0 200 OK\r\n" +
-                                   "Server: Rex/12.0.7601.17514\r\n" +
-                                   "Cache-Control: no-cache\r\n" +
-                                   "Pragma: no-cache\r\n" +
-                                   "Pragma: client-id=2236067900\r\n" +
-                                   "Pragma: features=\"broadcast,playlist\"\r\n" +
-                                   "Keep-Alive: timeout=1, max=0\r\n" +
-                                   "Content-Type: application/vnd.ms.wms-hdr.asfv1\r\n" +
-                                   "Connection: close\r\n" +
-                                   "\r\n"
-                               );
-                        }
-                        else {
-                            httpHeader = String.Format(
-                                       "HTTP/1.0 200 OK\r\n" +
-                                   "Server: Rex/12.0.7601.17514\r\n" +
-                                   "Cache-Control: no-cache\r\n" +
-                                   "Pragma: no-cache\r\n" +
-                                   "Pragma: client-id=2236067900\r\n" +
-                                   "Pragma: features=\"broadcast,playlist\"\r\n" +
-                                   "Keep-Alive: timeout=1, max=0\r\n" +
-                                   "Content-Type: application/vnd.ms.wms-hdr.asfv1\r\n" +
-                                   "Connection: close\r\n" +
-                                   "\r\n"
-                                  );
-                        }
-                        httpHeaderBuffer = Encoding.UTF8.GetBytes(httpHeader);
-                        mClient.Send(httpHeaderBuffer);
-                        mClient.Send(asfData.asf_header, asfData.asf_header_size, SocketFlags.None);
-                        Console.WriteLine("ASF header sent.");
-                        try
-                        {
-                            mForm.BeginInvoke(new Action<String>(delegate(String str) { mForm.logoutput("ASFヘッダを送信しました。[" + mClient.RemoteEndPoint.ToString() + "]"); }), new object[] { "" });
-
-                        }
-                        catch (Exception)
-                        {
-                        }    
-                        //if (message.Contains("kagami"))
-                        //if(true)
-                        //{
-                        asfData.mms_sock = mClient;
-                        asfData.mmsh_status = MMSH_STATUS.MMSH_STATUS_ASF_HEADER_SEND;
-                        //}
-                        //else
-                        //{
-                        //    mForm.BeginInvoke(new Action<String>(delegate(String str) { mForm.logoutput("クライアントを切断します。[" + mClient.RemoteEndPoint.ToString() + "]"); }), new object[] { "" });
-                        //    mClient.Close();
-                        //}
-
-                    } else {
-                        mForm.BeginInvoke(new Action<String>(delegate(String str) { mForm.logoutput("クライアントを切断します。"); }), new object[] { "" });
-                        mClient.Close();
-                    }
-                   
-                }
-                else {
+                    httpHeader = String.Format(
+                        "HTTP/1.0 200 OK\r\n" +
+                        "Server: Rex/12.0.7601.17514\r\n" +
+                        "Cache-Control: no-cache\r\n" +
+                        "Pragma: no-cache\r\n" +
+                        "Pragma: client-id=2236067900\r\n" +
+                        "Pragma: features=\"broadcast,playlist\"\r\n" +
+                        "Content-Type: application/x-mms-framed\r\n" +
+                        "\r\n"
+                    );
+                    httpHeaderBuffer = Encoding.UTF8.GetBytes(httpHeader);
+                    mClient.Send(httpHeaderBuffer);
+                    mClient.Send(asfData.asf_header, asfData.asf_header_size, SocketFlags.None);
+                    Console.WriteLine("ASF header sent.");
+                    asfData.mms_sock = mClient;
+                    asfData.mmsh_status = MMSH_STATUS.MMSH_STATUS_ASF_HEADER_SEND;
+                } else {
                     mForm.BeginInvoke(new Action<String>(delegate(String str) { mForm.logoutput("MMSヘッダが未登録のため切断します。"); }), new object[] { "" });
                     httpHeader = String.Format(
                             "HTTP/1.0 503 Service Unavailable\r\n" +

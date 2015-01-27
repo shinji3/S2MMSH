@@ -847,6 +847,7 @@ namespace S2MMSH
                                             int recvLen = 0;
                                             try
                                             {
+                                                while (!mClient.Poll(100, SelectMode.SelectRead)) {}
                                                 while (mClient.Available > 0)
                                                 {
                                                     recvLen += mClient.Receive(buffer);
