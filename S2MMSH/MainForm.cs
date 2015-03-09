@@ -345,6 +345,11 @@ namespace S2MMSH
                                                 }
                                                 else if (compBinaryList(buf, spo_j + 24, stream_type_audio, 0, 16))
                                                 {
+                                                    byte[] ff_asf_audio_conceal_none = new byte[] { 0x00, 0x57, 0xfb, 0x20, 0x55, 0x5B, 0xCF, 0x11, 0xa8, 0xfd, 0x00, 0x80, 0x5f, 0x5c, 0x44, 0x2b };
+                                                    for (int i = 0; i < 16; i++)
+                                                    {
+                                                        buf[spo_j + 40 + i] = ff_asf_audio_conceal_none[i];
+                                                    }
                                                     stream_num[stream_amount] = buf[spo_j + 72];
                                                     stream_type[stream_amount] = 2;
                                                     stream_amount++;
