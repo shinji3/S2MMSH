@@ -350,6 +350,21 @@ namespace S2MMSH
                                                     {
                                                         buf[spo_j + 40 + i] = ff_asf_audio_conceal_none[i];
                                                     }
+
+                                                    int average_number_of_bytes_per_second = 0;
+                                                    for (int i = 0; i < 4; i++)
+                                                    {
+                                                        average_number_of_bytes_per_second += buf[spo_j + 86 + i] << 8 * i;
+                                                    }
+
+                                                    if (average_number_of_bytes_per_second == 0)
+                                                    {
+                                                        for (int i = 0; i < 4; i++)
+                                                        {
+                                                            buf[spo_j + 86 + i] = (byte)((16000 >> 8 * i) & 0xFF);
+                                                        }
+                                                    }
+
                                                     stream_num[stream_amount] = buf[spo_j + 72];
                                                     stream_type[stream_amount] = 2;
                                                     stream_amount++;
